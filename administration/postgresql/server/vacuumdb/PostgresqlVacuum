@@ -1,0 +1,47 @@
+#!/bin/bash
+# This script was deployed by PIC
+# Is recommended to customize it according to your needings
+# Please contact storage@pic.es if you have any question
+
+# Script Purposes:
+#   - Daily vacuums and analyzes the Postgresql database
+#   - Generate GMetric to be plotted in Ganglia
+
+LOG=/var/log/PostgresqlVacuum.log
+LOCKFILE=/tmp/PostgresqlVacuum.CRON.lock
+GMETRIC="/usr/bin/gmetric --type int16 --units Seconds --dmax 100000"
+
+#Logging all the output to a LogFile:
+exec 1> $LOG 2>&1
+
+#Lock and unlock code
+unlock_and_exit()
+{
+        rm -f $LOCKFILE
+        trap - INT TERM EXIT
+        exit $1
+}
+if [ -f $LOCKFILE ]; then
+        PID="`cat $LOCKFILE`"
+        if  [ -n "$PID" ] && [ `ps $PID | wc -l` -eq 1 ]
+	then 
+                echo "Removing $LOCKFILE for PID=$PID"
+                rm -f $LOCKFILE
+        else
+                echo "Lockfile $LOCKFILE exists. Giving up because PID $PID exists.";
+                exit 1
+        fi
+fi
+# Locking towards another running instance of this script..
+trap "unlock_and_exit 1" INT TERM EXIT
+echo $$ > $LOCKFILE
+
+DATE1=`date +%s`
+echo "Starting vacuum on `date`"
+# Vacuum and analyze all DBs from localhost using Postgresql-9.2 client 
+time /usr/pgsql-9.2/bin/vacuumdb -a -Upostgres -z -v
+
+DATE2=`date +%s`; DELTAT=`expr $DATE2 - $DATE1`
+echo "Finished vacuum on `date`. It took $DELTAT seconds."
+$GMETRIC --name PostgresqlVacuumCron --value $DELTAT
+
