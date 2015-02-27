@@ -1,0 +1,155 @@
+#!/bin/sh
+
+
+#initialise and secure the shell execution environment
+unset -v IFS
+PATH='/usr/sbin:/sbin:/usr/bin:/bin'
+
+
+
+
+
+
+
+
+#*******************************************************************************
+#*** Default Values                                                          ***
+#*******************************************************************************
+DEFAULT_OUTPUT_FORMAT='PNFSID+PATHNAME'
+
+
+
+
+#*******************************************************************************
+#*** Print Program Usage                                                     ***
+#*******************************************************************************
+print_usage()
+{
+	printf 'print_files_with_one_replica_on_certain_pool \033[4mpoolname\033[0m \033[1m[\033[0;4moutput-format\033[0;1m]\033[0m\n'
+	printf 'print_files_with_one_replica_on_certain_pool\n'
+	printf '\n'
+	printf 'Prints files (one per line) that have exactly one replica when this is located on the specified pool.\n'
+	printf 'It should be noted, that dCache’s storage file flags (for example “precious”, “cached” or “sticky”) are not taken into account. This means that also cached-only lost files will be reported, which are files that were neither “precious” nor “cached” and “sticky”. Further, any replicas on tape are not taken into account.'
+	printf 'Without arguments, this usage information is printed.\n'
+	printf '\n\n'
+	printf '\033[4mpoolname\033[0m: The name of the pool\n'
+	printf '\033[4moutput-format\033[0m: If “%s” or unset, the PNFS-ID and pathname separated by “ ” are printed.\n' "${DEFAULT_OUTPUT_FORMAT}"
+	printf '               If “PNFSID”, the PNFS-ID is printed.\n'
+	printf '               If “PATHNAME”, the pathname is printed.\n'
+	printf '\n'
+	printf 'Limitations:\n'
+	printf 'Currently only PostgreSQL (using psql) is supported.\n'
+	printf 'Chimera must use the database name “chimera” and access to it must be possible via the username “chimera”.\n'
+}
+
+
+
+
+#*******************************************************************************
+#*** Query PostgreSQL For The Desired File List                              ***
+#*******************************************************************************
+query_postgresql()
+{	
+	psql --username=chimera --dbname=chimera --no-align --tuples-only --field-separator=' '
+	if [ $? -ne 0 ]; then #error handling
+		printf 'Error: Querying PostgreSQL was not successful.\n'
+		exit 1
+	fi
+}
+
+
+
+
+#*******************************************************************************
+#*** Initialisation                                                          ***
+#*******************************************************************************
+#parse the arguments to this script
+pool="$1"
+output_format="${2:-"${DEFAULT_OUTPUT_FORMAT}"}"
+
+
+#check whether the correct number of arguments are specified
+if [ $# -gt 2 ]; then
+	printf 'Error: Invalid arguments.\n'
+	exit 2
+fi
+
+
+#if no arguments were given, print the program usage and exit
+if [ $# -eq 0 ]; then
+	print_usage >&2
+	exit 0
+fi
+
+
+#check for the package “postgresql-client” which contains “psql”
+#Debian
+if [ -e /etc/debian_version ]; then
+	if [ "$( dpkg-query --showformat='${Status}' --show postgresql-client 2> /dev/null )"  !=  'install ok installed' ]; then
+		printf 'Error: “postgresql-client” is not installed.\n' >&2
+		exit 1
+	fi
+#non-Debian
+else
+	if [ \! -x /usr/bin/psql ]; then
+		printf 'Error: “psql” is not available.\n' >&2
+		exit 1
+	fi
+fi
+
+
+
+
+#*******************************************************************************
+#*** Query PostgreSQL For The Desired File List                              ***
+#*******************************************************************************
+#check whether the selected output format is known and query PostgreSQL
+case "${output_format}" in
+([Pp][Nn][Ff][Ss][Ii][Dd]+[Pp][Aa][Tt][Hh][Nn][Aa][Mm][Ee])
+	printf "WITH one_replica AS (SELECT ipnfsid FROM t_locationinfo GROUP BY ipnfsid HAVING count(ilocation)=1) SELECT ipnfsid,inode2path(ipnfsid) FROM one_replica NATURAL LEFT JOIN t_locationinfo WHERE ilocation='%s';" "${pool}" | query_postgresql
+	;;
+([Pp][Nn][Ff][Ss][Ii][Dd])
+	printf "WITH one_replica AS (SELECT ipnfsid FROM t_locationinfo GROUP BY ipnfsid HAVING count(ilocation)=1) SELECT ipnfsid FROM one_replica NATURAL LEFT JOIN t_locationinfo WHERE ilocation='%s';" "${pool}" | query_postgresql
+	;;
+([Pp][Aa][Tt][Hh][Nn][Aa][Mm][Ee])
+	printf "WITH one_replica AS (SELECT ipnfsid FROM t_locationinfo GROUP BY ipnfsid HAVING count(ilocation)=1) SELECT inode2path(ipnfsid) FROM one_replica NATURAL LEFT JOIN t_locationinfo WHERE ilocation='%s';" "${pool}" | query_postgresql
+	;;
+(*)
+	printf 'Error: An unknown output format was specified.\n' >&2
+	exit 2
+esac
+
+
+
+
+exit 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Copyright © 2015, Christoph Anton Mitterer <mail@christoph.anton.mitterer.name>.
+#All rights reserved.
+#
+#
+#This program is free software: you can redistribute it and/or modify it under
+#the terms of the GNU General Public License as published by the Free Software
+#Foundation, either version 3 of the License, or (at your option) any later
+#version.
+#This program is distributed in the hope that it will be useful, but WITHOUT ANY
+#WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#PARTICULAR PURPOSE.
+#See the GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License along with
+#this program. If not, see <http://www.gnu.org/licenses/>.
