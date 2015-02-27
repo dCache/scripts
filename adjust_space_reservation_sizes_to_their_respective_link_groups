@@ -1,0 +1,95 @@
+#!/bin/sh
+
+
+#initialise and secure the shell execution environment
+unset -v IFS
+PATH='/usr/sbin:/sbin:/usr/bin:/bin'
+
+
+
+
+
+
+
+
+#********************************************************************************
+#*** Initialisation                                                           ***
+#********************************************************************************
+#check for “dcache_admin”
+if [ ! -x /usr/local/bin/dcache_admin ]; then
+	printf 'Error: dcache_admin is not available.\n' >&2
+	exit 1
+fi
+
+
+
+
+#********************************************************************************
+#*** Adjust The Space Token Sizes To Their Respective Link Group              ***
+#********************************************************************************
+#get listing from the space manager
+space_manager_listing="$( printf 'cd SrmSpaceManager\nls\n'  |  /usr/local/bin/dcache_admin )"
+if [ $? -ne 0 ]; then #error handling
+	printf 'Error: Could not get listing from the space manager.\n' >&2
+	exit 1
+fi
+
+#construct adjustment commands
+{
+	printf 'cd SrmSpaceManager\n'
+	
+	printf '%s\n' "${space_manager_listing}"  |  grep ' linkGroupId:[[:digit:]][[:digit:]]* ' \
+	| while read space_token_listing; do
+		space_token_id="$( printf '%s' "${space_token_listing}"  |  cut -d ' ' -f 1 )"
+		link_group_id="$( printf '%s' "${space_token_listing}"  |  sed 's/^.* linkGroupId:\([[:digit:]][[:digit:]]*\) .*$/\1/' )"
+		space_token_size="$( printf '%s' "${space_token_listing}"  |  sed 's/^.* size:\([[:digit:]][[:digit:]]*\) .*$/\1/' )"
+		
+		link_group_available_space="$( printf '%s' "${space_manager_listing}"  |  grep "^${link_group_id} Name:"  |  sed 's/^.* AvailableSpace:\(-*[[:digit:]][[:digit:]]*\) .*$/\1/' )"
+		
+		printf 'update space reservation -size=%s %s\n' "$((${space_token_size}+${link_group_available_space}))" "${space_token_id}"
+	done
+	
+	printf '..\nlogoff\n'
+} \
+| /usr/local/bin/dcache_admin > /dev/null
+if [ $? -ne 0 ]; then #error handling
+	printf 'Error: Could not adjust the space token sizes to their respective link group.\n' >&2
+	exit 1
+fi
+
+
+
+
+exit 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Copyright © 2012–2013, Christoph Anton Mitterer <mail@christoph.anton.mitterer.name>.
+#All rights reserved.
+#
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
