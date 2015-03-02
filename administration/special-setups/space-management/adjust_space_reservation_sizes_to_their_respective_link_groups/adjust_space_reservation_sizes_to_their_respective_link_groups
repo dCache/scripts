@@ -1,0 +1,139 @@
+#!/bin/sh
+
+
+#initialise and secure the shell execution environment
+unset -v IFS
+PATH='/usr/sbin:/sbin:/usr/bin:/bin'
+
+
+
+
+
+
+
+
+#*******************************************************************************
+#*** Print Program Usage                                                     ***
+#*******************************************************************************
+print_usage()
+{
+	printf 'adjust_space_reservation_sizes_to_their_respective_link_groups\n'
+	printf 'adjust_space_reservation_sizes_to_their_respective_link_groups \033[1m[\033[0m--help\033[1m|\033[0m-h\033[1m]\033[0m\n'
+	printf '\n'
+	printf 'Without arguments, prints commands for a dCache Administration shell that resize all space reservations to the amount of space available in their respective link groups.\n'
+	printf 'This can be useful to adapt the space reservations automatically when pools are added to or removed from link groups as well as to correct the reservation sizes in case of spurious increase/decrease of the link group’s space.\n'
+	printf '\033[31mBeware, that these commands must not be used in dCache cluster layouts where space reservations don’t correspond exactly to one link group (and vice-versa)!\033[0m\n'
+	printf '\n\n'
+	printf '%shelp, -h: Prints this usage information.\n' '--'
+	printf '\n'
+	printf 'Limitations:\n'
+	printf 'Currently, the program expects that the service “spacemanager” uses the cell name “SrmSpaceManager”.\n'
+	printf 'It makes usually no sense to use the commands constructed by this program unless each space reservation corresponds exactly to one link group (and vice-versa).\n'
+}
+
+
+
+
+#*******************************************************************************
+#*** Initialisation                                                          ***
+#*******************************************************************************
+#if no arguments were given, print the program usage and exit
+if [ $# -eq 1 ]; then
+	case "$1" in
+	(--help|-h)
+		print_usage >&2
+		exit 0
+		;;
+	
+	(*)
+		printf 'Error: Invalid arguments.\n'
+		exit 2
+	esac
+fi
+
+
+#check whether the correct number of arguments are specified
+if [ $# -ne 0 ]; then
+	printf 'Error: Invalid arguments.\n'
+	exit 2
+fi
+
+
+#check for “dcache_admin”
+if [ ! -x /usr/local/bin/dcache_admin ]; then
+	printf 'Error: dcache_admin is not available.\n' >&2
+	exit 1
+fi
+
+
+
+
+#*******************************************************************************
+#*** Adjust The Space Reservation Sizes To Their Respective Link Groups      ***
+#*******************************************************************************
+#get listings from the space manager
+link_groups_listing="$( printf 'cd SrmSpaceManager\nupdate link groups -blocking\nls link groups\n'  |  /usr/local/bin/dcache_admin )"
+if [ $? -ne 0 ]; then #error handling
+	printf 'Error: Could not get link groups listing from the space manager.\n' >&2
+	exit 1
+fi
+link_groups_listing="$( printf "%s" "${link_groups_listing}" | sed '0,/^[[:space:]]*FLAGS[[:space:]][[:space:]]*CNT[[:space:]][[:space:]]*RESVD[[:space:]][[:space:]]*AVAIL[[:space:]][[:space:]]*FREE[[:space:]][[:space:]]*UPDATED[[:space:]][[:space:]]*NAME[[:space:]]*$/d; /^$/Q; s/^ *//; s/   */ /g; s/ + / /g; s/ = / /g' )"
+
+space_reservations_listing="$( printf 'cd SrmSpaceManager\nls spaces\n'  |  /usr/local/bin/dcache_admin )"
+if [ $? -ne 0 ]; then #error handling
+	printf 'Error: Could not get space reservations listing from the space manager.\n' >&2
+	exit 1
+fi
+space_reservations_listing="$( printf '%s' "${space_reservations_listing}"  |  sed '0,/^[[:space:]]*TOKEN[[:space:]][[:space:]]*LINKGROUP[[:space:]][[:space:]]*RETENTION[[:space:]][[:space:]]*LATENCY[[:space:]][[:space:]]*ALLO[[:space:]][[:space:]]*USED[[:space:]][[:space:]]*FREE[[:space:]][[:space:]]*SIZE[[:space:]][[:space:]]*DESCRIPTION[[:space:]]*$/d; /^$/Q; s/^ *//; s/   */ /g; s/ + / /g; s/ = / /g' )"
+
+
+#construct and print adjustment commands
+printf '..\ncd SrmSpaceManager\n'
+
+printf '%s\n' "$space_reservations_listing" \
+| while read space_reservation; do
+	space_reservation_token="$( printf '%s' "${space_reservation}"  |  cut -d ' ' -f 1 )"
+	space_reservation_link_group="$( printf '%s' "${space_reservation}"  |  cut -d ' ' -f 2 )"
+	space_reservation_size="$( printf '%s' "${space_reservation}"  |  cut -d ' ' -f 8 )"
+	
+	link_group_available_space="$( printf '%s' "${link_groups_listing}"  |  grep "${space_reservation_link_group}[[:space:]]*$"  |  cut -d ' ' -f 4 )"
+	
+	printf 'update space -size=%s %s\n' "$((${space_reservation_size}+${link_group_available_space}))" "${space_reservation_token}"
+done
+
+printf '..\n'
+
+
+
+
+exit 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Copyright © 2012–2015, Christoph Anton Mitterer <mail@christoph.anton.mitterer.name>.
+#All rights reserved.
+#
+#
+#This program is free software: you can redistribute it and/or modify it under
+#the terms of the GNU General Public License as published by the Free Software
+#Foundation, either version 3 of the License, or (at your option) any later
+#version.
+#This program is distributed in the hope that it will be useful, but WITHOUT ANY
+#WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#PARTICULAR PURPOSE.
+#See the GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License along with
+#this program. If not, see <http://www.gnu.org/licenses/>.
