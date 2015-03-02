@@ -43,28 +43,21 @@ fi
 space_reservations_listing="$( printf '%s' "${space_reservations_listing}"  |  sed '0,/^[[:space:]]*TOKEN[[:space:]][[:space:]]*LINKGROUP[[:space:]][[:space:]]*RETENTION[[:space:]][[:space:]]*LATENCY[[:space:]][[:space:]]*ALLO[[:space:]][[:space:]]*USED[[:space:]][[:space:]]*FREE[[:space:]][[:space:]]*SIZE[[:space:]][[:space:]]*DESCRIPTION[[:space:]]*$/d; /^$/Q; s/^ *//; s/   */ /g; s/ + / /g; s/ = / /g' )"
 
 
-#construct adjustment commands
-{
-	printf '..\ncd SrmSpaceManager\n'
+#construct and print adjustment commands
+printf '..\ncd SrmSpaceManager\n'
 
-	printf '%s\n' "$space_reservations_listing" \
-	| while read space_reservation; do
-		space_reservation_token="$( printf '%s' "${space_reservation}"  |  cut -d ' ' -f 1 )"
-		space_reservation_link_group="$( printf '%s' "${space_reservation}"  |  cut -d ' ' -f 2 )"
-		space_reservation_size="$( printf '%s' "${space_reservation}"  |  cut -d ' ' -f 8 )"
+printf '%s\n' "$space_reservations_listing" \
+| while read space_reservation; do
+	space_reservation_token="$( printf '%s' "${space_reservation}"  |  cut -d ' ' -f 1 )"
+	space_reservation_link_group="$( printf '%s' "${space_reservation}"  |  cut -d ' ' -f 2 )"
+	space_reservation_size="$( printf '%s' "${space_reservation}"  |  cut -d ' ' -f 8 )"
 	
-		link_group_available_space="$( printf '%s' "${link_groups_listing}"  |  grep "${space_reservation_link_group}[[:space:]]*$"  |  cut -d ' ' -f 4 )"
+	link_group_available_space="$( printf '%s' "${link_groups_listing}"  |  grep "${space_reservation_link_group}[[:space:]]*$"  |  cut -d ' ' -f 4 )"
 	
-		printf 'update space -size=%s %s\n' "$((${space_reservation_size}+${link_group_available_space}))" "${space_reservation_token}"
-	done
+	printf 'update space -size=%s %s\n' "$((${space_reservation_size}+${link_group_available_space}))" "${space_reservation_token}"
+done
 
-	printf '..\nlogoff\n'
-} \
-| /usr/local/bin/dcache_admin > /dev/null
-if [ $? -ne 0 ]; then #error handling
-	printf 'Error: Could not adjust the space token sizes to their respective link groups.\n' >&2
-	exit 1
-fi
+printf '..\n'
 
 
 
