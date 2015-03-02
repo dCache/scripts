@@ -13,8 +13,52 @@ PATH='/usr/sbin:/sbin:/usr/bin:/bin'
 
 
 #*******************************************************************************
+#*** Print Program Usage                                                     ***
+#*******************************************************************************
+print_usage()
+{
+	printf 'adjust_space_reservation_sizes_to_their_respective_link_groups\n'
+	printf 'adjust_space_reservation_sizes_to_their_respective_link_groups \033[1m[\033[0m--help\033[1m|\033[0m-h\033[1m]\033[0m\n'
+	printf '\n'
+	printf 'Without arguments, prints commands for a dCache Administration shell that resize all space reservations to the amount of space available in their respective link groups.\n'
+	printf 'This can be useful to adapt the space reservations automatically when pools are added to or removed from link groups as well as to correct the reservation sizes in case of spurious increase/decrease of the link group’s space.\n'
+	printf '\033[31mBeware, that these commands must not be used in dCache cluster layouts where space reservations don’t correspond exactly to one link group (and vice-versa)!\033[0m\n'
+	printf '\n\n'
+	printf '%shelp, -h: Prints this usage information.\n' '--'
+	printf '\n'
+	printf 'Limitations:\n'
+	printf 'Currently, the program expects that the service “spacemanager” uses the cell name “SrmSpaceManager”.\n'
+	printf 'It makes usually no sense to use the commands constructed by this program unless each space reservation corresponds exactly to one link group (and vice-versa).\n'
+}
+
+
+
+
+#*******************************************************************************
 #*** Initialisation                                                          ***
 #*******************************************************************************
+#if no arguments were given, print the program usage and exit
+if [ $# -eq 1 ]; then
+	case "$1" in
+	(--help|-h)
+		print_usage >&2
+		exit 0
+		;;
+	
+	(*)
+		printf 'Error: Invalid arguments.\n'
+		exit 2
+	esac
+fi
+
+
+#check whether the correct number of arguments are specified
+if [ $# -ne 0 ]; then
+	printf 'Error: Invalid arguments.\n'
+	exit 2
+fi
+
+
 #check for “dcache_admin”
 if [ ! -x /usr/local/bin/dcache_admin ]; then
 	printf 'Error: dcache_admin is not available.\n' >&2
