@@ -1,0 +1,99 @@
+#!/bin/sh
+
+
+#initialise and secure the shell execution environment
+unset -v IFS
+PATH='/usr/sbin:/sbin:/usr/bin:/bin'
+
+
+
+
+
+
+
+
+#*******************************************************************************
+#*** Initialisation                                                          ***
+#*******************************************************************************
+#determine dcache-admin port number
+port="$( getent services dcache-admin )"
+if [ $? -ne 0 ]; then #error handling
+	printf "Error: The port “dcache-admin” is not defined.\n" >&2
+	exit 1
+fi
+port="$( printf "%s" "${port}"  |  sed "s/^.*[[:space:]]//; s/\/.*$//" )"
+
+#determine dcache-admin-batch port number
+port_batch="$( getent services dcache-admin-batch )"
+if [ $? -ne 0 ]; then #error handling
+	port_batch="${port}"
+else
+	port_batch="$( printf "%s" "${port_batch}"  |  sed "s/^.*[[:space:]]//; s/\/.*$//" )"
+fi
+
+
+
+
+#*******************************************************************************
+#*** Connect To A dCache Administration Shell                                ***
+#*******************************************************************************
+if [ -t 0 ]; then
+	if [ $# -eq 0 ]; then
+		#interactive mode
+		ssh -p "${port}" admin@localhost
+		tmp=$?
+	else
+		#command positional parameters mode
+		while [ $# -gt 0 ]; do printf "%s\n" "$1"; shift 1; done  |  ssh -p "${port_batch}" -T admin@localhost  |  sed "s/^\r//"
+		tmp=$?
+		
+		printf "\n"
+	fi
+else
+	#check whether positional parameters have been specified
+	if [ $# -ne 0 ]; then
+		printf "Warning: The positional parameters are ignored.\n" >&2
+	fi
+	
+	
+	#commands stream mode
+	ssh -p "${port_batch}" -T admin@localhost  |  sed "s/^\r//"
+	tmp=$?
+	
+	printf "\n"
+fi
+
+
+
+
+exit "${tmp}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Copyright © 2009–2015, Christoph Anton Mitterer <mail@christoph.anton.mitterer.name>.
+#All rights reserved.
+#
+#
+#This program is free software: you can redistribute it and/or modify it under
+#the terms of the GNU General Public License as published by the Free Software
+#Foundation, either version 3 of the License, or (at your option) any later
+#version.
+#This program is distributed in the hope that it will be useful, but WITHOUT ANY
+#WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#PARTICULAR PURPOSE.
+#See the GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License along with
+#this program. If not, see <http://www.gnu.org/licenses/>.
