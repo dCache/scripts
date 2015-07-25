@@ -72,7 +72,7 @@ fi
 #*** Adjust The Space Reservation Sizes To Their Respective Link Groups      ***
 #*******************************************************************************
 #get listings from the space manager
-link_groups_listing="$( printf '\\c SrmSpaceManager\nupdate link groups -blocking\nls link groups\n'  |  /usr/local/bin/dcache_admin )"
+link_groups_listing="$( printf '\\c SrmSpaceManager\nupdate link groups\nls link groups\n'  |  /usr/local/bin/dcache_admin )"
 if [ $? -ne 0 ]; then #error handling
 	printf 'Error: Could not get link groups listing from the space manager.\n' >&2
 	exit 1
