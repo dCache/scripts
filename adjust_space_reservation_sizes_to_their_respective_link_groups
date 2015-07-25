@@ -72,14 +72,14 @@ fi
 #*** Adjust The Space Reservation Sizes To Their Respective Link Groups      ***
 #*******************************************************************************
 #get listings from the space manager
-link_groups_listing="$( printf 'cd SrmSpaceManager\nupdate link groups -blocking\nls link groups\n'  |  /usr/local/bin/dcache_admin )"
+link_groups_listing="$( printf '\\c SrmSpaceManager\nupdate link groups -blocking\nls link groups\n'  |  /usr/local/bin/dcache_admin )"
 if [ $? -ne 0 ]; then #error handling
 	printf 'Error: Could not get link groups listing from the space manager.\n' >&2
 	exit 1
 fi
 link_groups_listing="$( printf "%s" "${link_groups_listing}" | sed '0,/^[[:space:]]*FLAGS[[:space:]][[:space:]]*CNT[[:space:]][[:space:]]*RESVD[[:space:]][[:space:]]*AVAIL[[:space:]][[:space:]]*FREE[[:space:]][[:space:]]*UPDATED[[:space:]][[:space:]]*NAME[[:space:]]*$/d; /^$/Q; s/^ *//; s/   */ /g; s/ + / /g; s/ = / /g' )"
 
-space_reservations_listing="$( printf 'cd SrmSpaceManager\nls spaces\n'  |  /usr/local/bin/dcache_admin )"
+space_reservations_listing="$( printf '\\c SrmSpaceManager\nls spaces\n'  |  /usr/local/bin/dcache_admin )"
 if [ $? -ne 0 ]; then #error handling
 	printf 'Error: Could not get space reservations listing from the space manager.\n' >&2
 	exit 1
@@ -88,7 +88,7 @@ space_reservations_listing="$( printf '%s' "${space_reservations_listing}"  |  s
 
 
 #construct and print adjustment commands
-printf '..\ncd SrmSpaceManager\n'
+printf '\\c SrmSpaceManager\n'
 
 printf '%s\n' "$space_reservations_listing" \
 | while read space_reservation; do
@@ -100,8 +100,6 @@ printf '%s\n' "$space_reservations_listing" \
 	
 	printf 'update space -size=%s %s\n' "$((${space_reservation_size}+${link_group_available_space}))" "${space_reservation_token}"
 done
-
-printf '..\n'
 
 
 
