@@ -46,7 +46,7 @@ if [ $# -eq 1 ]; then
 		;;
 	
 	(*)
-		printf 'Error: Invalid arguments.\n'
+		printf 'Error: Invalid arguments.\n' >&2
 		exit 2
 	esac
 fi
@@ -54,7 +54,7 @@ fi
 
 #check whether the correct number of arguments are specified
 if [ $# -ne 0 ]; then
-	printf 'Error: Invalid arguments.\n'
+	printf 'Error: Invalid arguments.\n' >&2
 	exit 2
 fi
 
