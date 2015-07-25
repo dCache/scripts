@@ -52,7 +52,7 @@ query_postgresql()
 {	
 	psql --username=chimera --dbname=chimera --no-align --tuples-only --field-separator=' '
 	if [ $? -ne 0 ]; then #error handling
-		printf 'Error: Querying PostgreSQL was not successful.\n'
+		printf 'Error: Querying PostgreSQL was not successful.\n' >&2
 		exit 1
 	fi
 }
@@ -70,7 +70,7 @@ output_format="${2:-"${DEFAULT_OUTPUT_FORMAT}"}"
 
 #check whether the correct number of arguments are specified
 if [ $# -gt 2 ]; then
-	printf 'Error: Invalid arguments.\n'
+	printf 'Error: Invalid arguments.\n' >&2
 	exit 2
 fi
 
