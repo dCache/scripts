@@ -74,7 +74,7 @@ if [ $? -ne 0 ]; then #error handling
 	printf 'Error: Could not get link groups listing from the space manager.\n' >&2
 	exit 1
 fi
-link_groups_listing="$( printf "%s" "${link_groups_listing}" | sed '0,/^[[:space:]]*FLAGS[[:space:]][[:space:]]*CNT[[:space:]][[:space:]]*RESVD[[:space:]][[:space:]]*AVAIL[[:space:]][[:space:]]*FREE[[:space:]][[:space:]]*UPDATED[[:space:]][[:space:]]*NAME[[:space:]]*$/d; /^$/Q; s/^ *//; s/   */ /g; s/ + / /g; s/ = / /g' )"
+link_groups_listing="$( printf '%s' "${link_groups_listing}" | sed '0,/^[[:space:]]*FLAGS[[:space:]][[:space:]]*CNT[[:space:]][[:space:]]*RESVD[[:space:]][[:space:]]*AVAIL[[:space:]][[:space:]]*FREE[[:space:]][[:space:]]*UPDATED[[:space:]][[:space:]]*NAME[[:space:]]*$/d; /^$/Q; s/^ *//; s/   */ /g; s/ + / /g; s/ = / /g' )"
 
 space_reservations_listing="$( printf '\\c SpaceManager\nls spaces\n'  |  /usr/local/bin/dcache_admin )"
 if [ $? -ne 0 ]; then #error handling
