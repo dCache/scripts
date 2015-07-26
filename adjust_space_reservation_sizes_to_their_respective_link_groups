@@ -37,10 +37,11 @@ print_usage()
 #*******************************************************************************
 #*** Initialisation                                                          ***
 #*******************************************************************************
-#if no arguments were given, print the program usage and exit
+#parse arguments
 if [ $# -eq 1 ]; then
 	case "$1" in
 	(--help|-h)
+		#print the program usage and exit
 		print_usage >&2
 		exit 0
 		;;
@@ -49,11 +50,7 @@ if [ $# -eq 1 ]; then
 		printf 'Error: Invalid arguments.\n' >&2
 		exit 2
 	esac
-fi
-
-
-#check whether the correct number of arguments are specified
-if [ $# -ne 0 ]; then
+elif [ $# -ne 0 ]; then
 	printf 'Error: Invalid arguments.\n' >&2
 	exit 2
 fi
