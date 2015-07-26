@@ -90,7 +90,7 @@ if [ -e /etc/debian_version ]; then
 	fi
 #non-Debian
 else
-	if [ \! -x /usr/bin/psql ]; then
+	if [ ! -x /usr/bin/psql ]; then
 		printf 'Error: “psql” is not available.\n' >&2
 		exit 1
 	fi
