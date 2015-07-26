@@ -82,7 +82,6 @@ output_format="${2:-"${DEFAULT_OUTPUT_FORMAT}"}"
 
 
 #check for the package “postgresql-client” which contains “psql”
-#Debian
 if [ -e /etc/debian_version ]; then
 	if [ "$( dpkg-query --showformat='${Status}' --show postgresql-client 2> /dev/null )"  !=  'install ok installed' ]; then
 		printf 'Error: “postgresql-client” is not installed.\n' >&2
