@@ -29,7 +29,7 @@ print_usage()
 	printf 'print_files_with_one_replica_on_certain_pool\n'
 	printf '\n'
 	printf 'Prints files (one per line) that have exactly one replica when this is located on the specified pool.\n'
-	printf 'It should be noted, that dCache’s storage file flags (for example “precious”, “cached” or “sticky”) are not taken into account. This means that also cached-only lost files will be reported, which are files that were neither “precious” nor “cached” and “sticky”. Further, any replicas on tape are not taken into account.'
+	printf 'It should be noted, that dCache’s storage file flags (for example “precious”, “cached” or “sticky”) are not taken into account. This means that also cached-only lost files will be reported, which are files that were neither “precious” nor “cached” and “sticky”. Further, any replicas on tape are not taken into account.\n'
 	printf '\n\n'
 	printf '\033[4mpoolname\033[0m: The name of the pool\n'
 	printf '\033[4moutput-format\033[0m: If “%s” or unset, the PNFS-ID and pathname separated by “ ” are printed.\n' "${DEFAULT_OUTPUT_FORMAT}"
