@@ -67,6 +67,10 @@ maximum_dump_file_age="$1"
 #*******************************************************************************
 #*** Create And Rotate ATLAS Rucio Chimera Dumps                             ***
 #*******************************************************************************
+#determine the current UTC date
+date="$(date -u +%Y%m%d)"
+
+
 #process each base directory
 while [ $# -ge 2 ]; do
 	shift 1
