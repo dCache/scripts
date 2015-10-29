@@ -127,6 +127,17 @@ while [ $# -ge 2 ]; do
 		#try to remove the created dump file
 		rm -f "${base_directory}/dump/dump_${date}"
 	fi
+	
+	
+	#rotate Chimera dumps in the base directory
+	if [ "${maximum_dump_file_age}" -gt 0 ]; then
+		#delete Chimera dumps older than the maximum dump file age
+		find "${base_directory}/dump" -depth -maxdepth 1 -type f -name 'dump_*' -mtime "+${maximum_dump_file_age}" -delete 2> /dev/null
+		if [ $? -ne 0 ]; then #error handling
+			printf 'Warning: Could not clean up old Chimera dumps in “%s/dump”.\n' "${base_directory}" >&2
+			exit_status=1
+		fi
+	fi
 done
 
 
