@@ -13,8 +13,32 @@ PATH='/usr/sbin:/sbin:/usr/bin:/bin'
 
 
 #*******************************************************************************
-#***                                                                         ***
+#*** Initialisation                                                          ***
 #*******************************************************************************
+#parse arguments
+if [ $# -eq 1 ]; then
+	case "$1" in
+	(--help|-h)
+		#print the program usage and exit
+		print_usage
+		exit 0
+		;;
+	
+	(*)
+		printf 'Error: Invalid arguments.\n' >&2
+		exit 2
+	esac
+elif [ $# -lt 2 ]; then
+	printf 'Error: Invalid arguments.\n' >&2
+	exit 2
+fi
+
+maximum_dump_file_age="$1"
+
+
+
+
+exit 0
 
 
 
