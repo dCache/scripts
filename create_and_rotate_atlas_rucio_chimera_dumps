@@ -82,6 +82,22 @@ while [ $# -ge 2 ]; do
 		exit_status=1
 		continue
 	fi
+	
+	#check whether the destination directory exists and try to create it if not
+	if [ -e "${base_directory}/dump" ]; then
+		if [ ! -d "${base_directory}/dump" ]; then
+			printf 'Error: “%s/dump” exists but is not a directory. Ignoring “%s”.\n' "${base_directory}" "${base_directory}" >&2
+			exit_status=1
+			continue
+		fi
+	else
+		mkdir "${base_directory}/dump" 2> /dev/null
+		if [ $? -ne 0 ]; then #error handling
+			printf 'Error: Could not create the directory “%s/dump”. Ignoring “%s”.\n' "${base_directory}" "${base_directory}" >&2
+			exit_status=1
+			continue
+		fi
+	fi
 done
 
 
