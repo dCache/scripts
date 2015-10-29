@@ -74,12 +74,20 @@ while [ $# -ge 2 ]; do
 	
 	#strip trailing “/” for cosmetical reasons
 	base_directory="$( printf '%s' "${base_directory}"  | sed 's|/*$||' )"
+	
+	
+	#check whether the subdirectory “rucio” exists
+	if [ ! -d "${base_directory}/rucio" ]; then
+		printf 'Warning: “%s” does not seem to be managed by Rucio and is ignored.\n' "${base_directory}" >&2
+		exit_status=1
+		continue
+	fi
 done
 
 
 
 
-exit 0
+exit "${exit_status:-0}"
 
 
 
