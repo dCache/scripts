@@ -102,6 +102,13 @@ while [ $# -ge 2 ]; do
 			continue
 		fi
 	fi
+	
+	#check whether the destination file exists
+	if [ -e "${base_directory}/dump/dump_${date}" ]; then
+		printf 'Error: “%s/dump/dump_%s” exists already. Ignoring “%s”.\n' "${base_directory}" "${date}" "${base_directory}" >&2
+		exit_status=1
+		continue
+	fi
 done
 
 
