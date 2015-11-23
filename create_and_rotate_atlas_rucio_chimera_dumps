@@ -21,7 +21,7 @@ print_usage()
 	printf 'create_and_rotate_atlas_rucio_chimera_dumps \033[1m[\033[0m--help\033[1m|\033[0m-h\033[1m]\033[0m\n'
 	printf '\n'
 	printf 'Creates and rotates Chimera dumps for a number of base directories using “chimera_find”.\n'
-	printf 'These are written as files to “dump/dump_%%Y%%m%%d” (with %%-symbols being interpreted according to strftime(3)) relative to the respective base directory. Typically this would happen on a NFS 4.1 mount of dCache/Chimera.\n'
+	printf 'These are written as files to “dumps/dump_%%Y%%m%%d” (with %%-symbols being interpreted according to strftime(3)) relative to the respective base directory. Typically this would happen on a NFS 4.1 mount of dCache/Chimera.\n'
 	printf '\n'
 	printf '“chimera_find” can be controlled by exporting certain environment variables (for example “HOST”, “PORT”, “DATABASE”, “USERNAME”, “DATE” and “LIMIT”).\n'
 	printf '\n\n'
@@ -95,46 +95,46 @@ while [ $# -ge 2 ]; do
 	fi
 	
 	#check whether the destination directory exists and try to create it if not
-	if [ -e "${base_directory}/dump" ]; then
-		if [ ! -d "${base_directory}/dump" ]; then
-			printf 'Error: “%s/dump” exists but is not a directory. Ignoring “%s”.\n' "${base_directory}" "${base_directory}" >&2
+	if [ -e "${base_directory}/dumps" ]; then
+		if [ ! -d "${base_directory}/dumps" ]; then
+			printf 'Error: “%s/dumps” exists but is not a directory. Ignoring “%s”.\n' "${base_directory}" "${base_directory}" >&2
 			exit_status=1
 			continue
 		fi
 	else
-		mkdir "${base_directory}/dump" 2> /dev/null
+		mkdir "${base_directory}/dumps" 2> /dev/null
 		if [ $? -ne 0 ]; then #error handling
-			printf 'Error: Could not create the directory “%s/dump”. Ignoring “%s”.\n' "${base_directory}" "${base_directory}" >&2
+			printf 'Error: Could not create the directory “%s/dumps”. Ignoring “%s”.\n' "${base_directory}" "${base_directory}" >&2
 			exit_status=1
 			continue
 		fi
 	fi
 	
 	#check whether the destination file exists
-	if [ -e "${base_directory}/dump/dump_${date}" ]; then
-		printf 'Error: “%s/dump/dump_%s” exists already. Ignoring “%s”.\n' "${base_directory}" "${date}" "${base_directory}" >&2
+	if [ -e "${base_directory}/dumps/dump_${date}" ]; then
+		printf 'Error: “%s/dumps/dump_%s” exists already. Ignoring “%s”.\n' "${base_directory}" "${date}" "${base_directory}" >&2
 		exit_status=1
 		continue
 	fi
 	
 	
 	#create a Chimera dump for the base directory
-	chimera_find "${base_directory}/dump/dump_${date}" "${base_directory}" /
+	chimera_find "${base_directory}/dumps/dump_${date}" "${base_directory}" /
 	if [ $? -ne 0 ]; then #error handling
 		printf 'Error: An error occurred while creating a Chimera dump for the base directory “%s”.\n' "${base_directory}" >&2
 		exit_status=1
 		
 		#try to remove the created dump file
-		rm -f "${base_directory}/dump/dump_${date}"
+		rm -f "${base_directory}/dumps/dump_${date}"
 	fi
 	
 	
 	#rotate Chimera dumps in the base directory
 	if [ "${maximum_dump_file_age}" -gt 0 ]; then
 		#delete Chimera dumps older than the maximum dump file age
-		find "${base_directory}/dump" -depth -maxdepth 1 -type f -name 'dump_*' -mtime "+${maximum_dump_file_age}" -delete 2> /dev/null
+		find "${base_directory}/dumps" -depth -maxdepth 1 -type f -name 'dump_*' -mtime "+${maximum_dump_file_age}" -delete 2> /dev/null
 		if [ $? -ne 0 ]; then #error handling
-			printf 'Warning: Could not clean up old Chimera dumps in “%s/dump”.\n' "${base_directory}" >&2
+			printf 'Warning: Could not clean up old Chimera dumps in “%s/dumps”.\n' "${base_directory}" >&2
 			exit_status=1
 		fi
 	fi
