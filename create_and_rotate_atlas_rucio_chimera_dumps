@@ -84,6 +84,33 @@ if [ ! -x "$( which psql )" ]; then
 fi
 
 
+#cross-initialise psql’s and chimera_find’s database connection parameters
+if [ -n "${PGHOST}" ]; then
+	export HOST="${HOST:-"${PGHOST}"}"
+fi
+if [ -n "${PGPORT}" ]; then
+	export PORT="${PORT:-"${PGPORT}"}"
+fi
+if [ -n "${PGUSER}" ]; then
+	export USERNAME="${USERNAME:-"${PGUSER}"}"
+fi
+if [ -n "${PGDATABASE}" ]; then
+	export DATABASE="${DATABASE:-"${PGDATABASE}"}"
+fi
+if [ -n "${HOST}" ]; then
+	export PGHOST="${PGHOST:-"${HOST}"}"
+fi
+if [ -n "${PORT}" ]; then
+	export PGPORT="${PGPORT:-"${PORT}"}"
+fi
+if [ -n "${USERNAME}" ]; then
+	export PGUSER="${PGUSER:-"${USERNAME}"}"
+fi
+if [ -n "${DATABASE}" ]; then
+	export PGDATABASE="${PGDATABASE:-"${DATABASE}"}"
+fi
+
+
 
 
 #*******************************************************************************
