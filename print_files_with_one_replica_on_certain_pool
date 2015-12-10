@@ -67,7 +67,7 @@ if [ $# -eq 1 ]; then
 	case "$1" in
 	(--help|-h)
 		#print the program usage and exit
-		print_usage >&2
+		print_usage
 		exit 0
 		;;
 	esac
