@@ -59,7 +59,7 @@ fi
 #check for “dcache_admin”
 if [ ! -x /usr/local/bin/dcache_admin ]; then
 	printf 'Error: dcache_admin is not available.\n' >&2
-	exit 1
+	exit 2
 fi
 
 
