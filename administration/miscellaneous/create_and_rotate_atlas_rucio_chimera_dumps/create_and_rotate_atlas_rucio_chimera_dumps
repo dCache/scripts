@@ -1,0 +1,223 @@
+#!/bin/sh
+
+
+#initialise and secure the shell execution environment
+unset -v IFS
+PATH='/usr/sbin:/sbin:/usr/bin:/bin'
+
+
+
+
+
+
+
+
+#*******************************************************************************
+#*** Default Values                                                          ***
+#*******************************************************************************
+#Note: This must be kept aligned with chimera_find’s default value of the parameter “DATE”.
+DEFAULT_CHIMERA_FIND_DATE_INTERVAL='1 day ago'
+
+
+
+
+#*******************************************************************************
+#*** Print Program Usage                                                     ***
+#*******************************************************************************
+print_usage()
+{
+	printf 'create_and_rotate_atlas_rucio_chimera_dumps \033[4mmaximum-dump-file-age\033[0m \033[0;4mbase-directory\033[0;1m…\033[0m\n'
+	printf 'create_and_rotate_atlas_rucio_chimera_dumps \033[1m[\033[0m--help\033[1m|\033[0m-h\033[1m]\033[0m\n'
+	printf '\n'
+	printf 'Creates and rotates Chimera dumps for a number of base directories using “chimera_find”.\n'
+	printf 'These are written as files to “dumps/dump_%%Y%%m%%d” (with %%-symbols being interpreted according to strftime(3)) relative to the respective base directory. Typically this would happen on a NFS 4.1 mount of dCache/Chimera.\n'
+	printf '\n'
+	printf '“chimera_find” can be controlled by exporting certain environment variables (for example “HOST”, “PORT”, “DATABASE”, “USERNAME”, “DATE” and “LIMIT”).\n'
+	printf '\n\n'
+	printf '\033[4mmaximum-dump-file-age\033[0m: Their maxmimum age in days before Chimera dumps will be deleted or “0” to disable rotation.\n'
+	printf '\033[4mbase-directory\033[0m: Pathnames of directories within Chimera, managed by ATLAS Rucio.\n'
+	printf '\n'
+	printf '%shelp, -h: Prints this usage information.\n' '--'
+	printf '\n\n'
+	printf 'Limitations:\n'
+	printf 'If the files are written to dCache via NFS 4.1 then the respective destination directories need to be writable.\n'
+	printf 'This means that somehow the effective user ID needs write permission. Also, if space management is used, it may be reasonable or even mandatory that the destination directories are configured to automatically register files to the appropriate space token (see the “WriteToken” tag).\n'
+}
+
+
+
+
+#*******************************************************************************
+#*** Initialisation                                                          ***
+#*******************************************************************************
+#parse arguments
+if [ $# -eq 1 ]; then
+	case "$1" in
+	(--help|-h)
+		#print the program usage and exit
+		print_usage
+		exit 0
+		;;
+	
+	(*)
+		printf 'Error: Invalid arguments.\n' >&2
+		exit 2
+	esac
+elif [ $# -lt 2 ]; then
+	printf 'Error: Invalid arguments.\n' >&2
+	exit 2
+fi
+
+maximum_dump_file_age="$1"
+
+
+#check for “chimera_find”
+if [ ! -x "$( which chimera_find )" ]; then
+	printf 'Error: chimera_find is not available.\n' >&2
+	exit 2
+fi
+
+#check for “psql”
+if [ ! -x "$( which psql )" ]; then
+	printf 'Error: psql is not available.\n' >&2
+	exit 2
+fi
+
+
+#cross-initialise psql’s and chimera_find’s database connection parameters
+if [ -n "${PGHOST}" ]; then
+	export HOST="${HOST:-"${PGHOST}"}"
+fi
+if [ -n "${PGPORT}" ]; then
+	export PORT="${PORT:-"${PGPORT}"}"
+fi
+if [ -n "${PGUSER}" ]; then
+	export USERNAME="${USERNAME:-"${PGUSER}"}"
+fi
+if [ -n "${PGDATABASE}" ]; then
+	export DATABASE="${DATABASE:-"${PGDATABASE}"}"
+fi
+if [ -n "${HOST}" ]; then
+	export PGHOST="${PGHOST:-"${HOST}"}"
+fi
+if [ -n "${PORT}" ]; then
+	export PGPORT="${PGPORT:-"${PORT}"}"
+fi
+if [ -n "${USERNAME}" ]; then
+	export PGUSER="${PGUSER:-"${USERNAME}"}"
+fi
+if [ -n "${DATABASE}" ]; then
+	export PGDATABASE="${PGDATABASE:-"${DATABASE}"}"
+fi
+
+
+
+
+#*******************************************************************************
+#*** Create And Rotate ATLAS Rucio Chimera Dumps                             ***
+#*******************************************************************************
+#determine the UTC date at the time interval’s start
+date="$( printf "SELECT EXTRACT(epoch FROM INTERVAL '%s');" "${DATE:-"${DEFAULT_CHIMERA_FIND_DATE_INTERVAL}"}"  |  psql --no-align --tuples-only --field-separator=' ' 2> /dev/null )"
+if [ $? -ne 0  -o  -z "${date}" ]; then
+	printf 'Error: Could not parse the time interval “%s”.\n' "${DATE:-"${DEFAULT_CHIMERA_FIND_DATE_INTERVAL}"}" >&2
+	exit 2
+fi
+date="$( date -u -d "@$(( $( date -u +%s ) + ${date} ))" +%Y%m%d )"
+
+
+#process each base directory
+while [ $# -ge 2 ]; do
+	shift 1
+	base_directory="$1"
+	
+	#strip trailing “/” for cosmetical reasons
+	base_directory="$( printf '%s' "${base_directory}"  | sed 's|/*$||' )"
+	
+	
+	#check whether the subdirectory “rucio” exists
+	if [ ! -d "${base_directory}/rucio" ]; then
+		printf 'Warning: “%s” does not seem to be managed by Rucio and is ignored.\n' "${base_directory}" >&2
+		exit_status=1
+		continue
+	fi
+	
+	#check whether the destination directory exists and try to create it if not
+	if [ -e "${base_directory}/dumps" ]; then
+		if [ ! -d "${base_directory}/dumps" ]; then
+			printf 'Error: “%s/dumps” exists but is not a directory. Ignoring “%s”.\n' "${base_directory}" "${base_directory}" >&2
+			exit_status=1
+			continue
+		fi
+	else
+		mkdir "${base_directory}/dumps" 2> /dev/null
+		if [ $? -ne 0 ]; then #error handling
+			printf 'Error: Could not create the directory “%s/dumps”. Ignoring “%s”.\n' "${base_directory}" "${base_directory}" >&2
+			exit_status=1
+			continue
+		fi
+	fi
+	
+	#check whether the destination file exists
+	if [ -e "${base_directory}/dumps/dump_${date}" ]; then
+		printf 'Error: “%s/dumps/dump_%s” exists already. Ignoring “%s”.\n' "${base_directory}" "${date}" "${base_directory}" >&2
+		exit_status=1
+		continue
+	fi
+	
+	
+	#create a Chimera dump for the base directory
+	chimera_find "${base_directory}/dumps/dump_${date}" "${base_directory}" /
+	if [ $? -ne 0 ]; then #error handling
+		printf 'Error: An error occurred while creating a Chimera dump for the base directory “%s”.\n' "${base_directory}" >&2
+		exit_status=1
+		
+		#try to remove the created dump file
+		rm -f "${base_directory}/dumps/dump_${date}"
+	fi
+	
+	
+	#rotate Chimera dumps in the base directory
+	if [ "${maximum_dump_file_age}" -gt 0 ]; then
+		#delete Chimera dumps older than the maximum dump file age
+		find "${base_directory}/dumps" -depth -maxdepth 1 -type f -name 'dump_*' -mtime "+${maximum_dump_file_age}" -delete 2> /dev/null
+		if [ $? -ne 0 ]; then #error handling
+			printf 'Warning: Could not clean up old Chimera dumps in “%s/dumps”.\n' "${base_directory}" >&2
+			exit_status=1
+		fi
+	fi
+done
+
+
+
+
+exit "${exit_status:-0}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Copyright © 2015, Christoph Anton Mitterer <mail@christoph.anton.mitterer.name>.
+#All rights reserved.
+#
+#
+#This program is free software: you can redistribute it and/or modify it under
+#the terms of the GNU General Public License as published by the Free Software
+#Foundation, either version 3 of the License, or (at your option) any later
+#version.
+#This program is distributed in the hope that it will be useful, but WITHOUT ANY
+#WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#PARTICULAR PURPOSE.
+#See the GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License along with
+#this program. If not, see <http://www.gnu.org/licenses/>.

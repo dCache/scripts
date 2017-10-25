@@ -1,0 +1,6 @@
+Changes to this directory shouldn’t be directly commited to this repository but
+rather to
+“ssh://git@git.srv.scientia.net/calestyo/lmu/tools/dcache/create_and_rotate_atlas_rucio_chimera_dumps”,
+which is then subtree-merged here.
+
+Please contact “mail@christoph.anton.mitterer.name” in case of questions.
