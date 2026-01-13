@@ -17,6 +17,7 @@ usage() {
     echo "  -l Specifies a limit on how many files to include. Mainly useful for testing."
     echo "  -s Include the size of each file in the dump."
     echo "  -c Include the creation date of each file in the dump."
+    echo "  -x Include locality (O for online, N for nearline, can contain both)"
     echo "  -o Order the dump by pathnames."
     echo
     echo "FILENAME is the output file name. Use “-” to output to STDOUT. ROOT is the root of the"
@@ -28,8 +29,9 @@ usage() {
 }
 
 EXTRA_COLS=""
+JOIN_LOCATIONINFO=""
 
-while getopts h:p:d:U:D:l:sco f; do
+while getopts h:p:d:U:D:l:scxo f; do
   case "$f" in
   h) HOST="$OPTARG";;
   p) PORT="$OPTARG";;
@@ -39,6 +41,22 @@ while getopts h:p:d:U:D:l:sco f; do
   l) LIMIT="$OPTARG";;
   s) EXTRA_COLS="${EXTRA_COLS}, i.isize";;
   c) EXTRA_COLS="${EXTRA_COLS}, i.icrtime";;
+  x) EXTRA_COLS="${EXTRA_COLS}, l.locality"
+     JOIN_LOCATIONINFO="
+         LEFT JOIN LATERAL (
+             SELECT string_agg(
+                      CASE itype
+                        WHEN 0 THEN 'N'
+                        WHEN 1 THEN 'O'
+                      END,
+                      ''
+                      ORDER BY itype DESC
+                    ) AS locality
+             FROM t_locationinfo
+             WHERE inumber = p.inumber
+         ) l ON true
+     "
+     ;;
   o) ORDER="path";;
   \?) usage;;
   esac
@@ -71,6 +89,7 @@ else
   START="(path2inumber(pnfsid2inumber('000000000000000000000000000000000000'), '${ROOT#/}'), '${PREFIX%/}')"
 fi
 
+
 psql ${HOST:+-h $HOST} ${PORT:+-p $PORT} ${OUTPUT:+-o "$OUTPUT"} -t -A -f - $DATABASE $USERNAME <<-EOF
     \set ON_ERROR_STOP
     WITH RECURSIVE paths(inumber, path) AS (
@@ -81,5 +100,6 @@ psql ${HOST:+-h $HOST} ${PORT:+-p $PORT} ${OUTPUT:+-o "$OUTPUT"} -t -A -f - $DAT
          WHERE d.iname != '.' AND d.iname != '..'
     )
     SELECT p.path${EXTRA_COLS} FROM paths p JOIN t_inodes i ON p.inumber = i.inumber
+    ${JOIN_LOCATIONINFO}
     WHERE i.itype = 32768 ${DATE:+AND i.icrtime <= '$DATE'} ${ORDER:+ORDER BY $ORDER} ${LIMIT:+LIMIT ${LIMIT}};
 EOF
