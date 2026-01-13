@@ -16,6 +16,7 @@ usage() {
     echo "     Relative dates are allowed. Default is '1 day ago'."
     echo "  -l Specifies a limit on how many files to include. Mainly useful for testing."
     echo "  -s Include the size of each file in the dump."
+    echo "  -c Include the creation date of each file in the dump."
     echo "  -o Order the dump by pathnames."
     echo
     echo "FILENAME is the output file name. Use “-” to output to STDOUT. ROOT is the root of the"
@@ -28,7 +29,7 @@ usage() {
 
 EXTRA_COLS=""
 
-while getopts h:p:d:U:D:l:s:o f; do
+while getopts h:p:d:U:D:l:sco f; do
   case "$f" in
   h) HOST="$OPTARG";;
   p) PORT="$OPTARG";;
@@ -37,6 +38,7 @@ while getopts h:p:d:U:D:l:s:o f; do
   D) DATE="$OPTARG";;
   l) LIMIT="$OPTARG";;
   s) EXTRA_COLS="${EXTRA_COLS}, i.isize";;
+  c) EXTRA_COLS="${EXTRA_COLS}, i.icrtime";;
   o) ORDER="path";;
   \?) usage;;
   esac
@@ -69,15 +71,15 @@ else
   START="(path2inumber(pnfsid2inumber('000000000000000000000000000000000000'), '${ROOT#/}'), '${PREFIX%/}')"
 fi
 
-psql ${HOST:+-h $HOST} ${PORT:+-p $PORT} ${OUTPUT:+-o "$OUTPUT"} -t -A -f - $DATABASE $USERNAME <<EOF
-\set ON_ERROR_STOP
-WITH RECURSIVE paths(inumber, path) AS (
-     VALUES $START
-   UNION
-     SELECT d.ichild, p.path||'/'||d.iname
-     FROM paths p JOIN t_dirs d ON p.inumber = d.iparent
-     WHERE d.iname != '.' AND d.iname != '..'
-)
-SELECT p.path${EXTRA_COLS} FROM paths p JOIN t_inodes i ON p.inumber = i.inumber
-WHERE i.itype = 32768 ${DATE:+AND i.icrtime <= '$DATE'} ${ORDER:+ORDER BY $ORDER} ${LIMIT:+LIMIT ${LIMIT}};
+psql ${HOST:+-h $HOST} ${PORT:+-p $PORT} ${OUTPUT:+-o "$OUTPUT"} -t -A -f - $DATABASE $USERNAME <<-EOF
+    \set ON_ERROR_STOP
+    WITH RECURSIVE paths(inumber, path) AS (
+         VALUES $START
+       UNION
+         SELECT d.ichild, p.path||'/'||d.iname
+         FROM paths p JOIN t_dirs d ON p.inumber = d.iparent
+         WHERE d.iname != '.' AND d.iname != '..'
+    )
+    SELECT p.path${EXTRA_COLS} FROM paths p JOIN t_inodes i ON p.inumber = i.inumber
+    WHERE i.itype = 32768 ${DATE:+AND i.icrtime <= '$DATE'} ${ORDER:+ORDER BY $ORDER} ${LIMIT:+LIMIT ${LIMIT}};
 EOF
