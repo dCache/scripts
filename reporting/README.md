@@ -28,6 +28,7 @@ Options:
   -l Specifies a limit on how many files to include. Mainly useful for testing.
   -s Include the size of each file in the dump.
   -c Include the creation date of each file in the dump.
+  -x Include locality (O for online, N for nearline, can contain both)
   -o Order the dump by pathnames.
 
 FILENAME is the output file name. Use “-” to output to STDOUT. ROOT is the root of the
