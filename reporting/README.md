@@ -3,7 +3,7 @@ chimera_find.sh
 
 `chimera_find.sh` creates a file listing of a directory in dCache.
 
-This script is much fast than crawling through the dCache structure with client or API tools. The reason is that it queries the database directly, and it bypasses permissions. This makes it fast but you should be careful to not expose a project's file and directory names to unauthorized persons.
+This script is much faster than crawling through the dCache structure with client or API tools. The reason is that it queries the database directly, and it bypasses permissions. This makes it fast but you should be careful to not expose a project's file and directory names to unauthorized persons.
 
 It was created by Gerd Behrman (according to: https://twiki.cern.ch/twiki/bin/view/AtlasComputing/DDMDarkDataAndLostFiles#Automated_checks_Site_Responsibi) and has been maintained and improved by others, of whom Christoph Anton Mitterer deserves a special mention.
 
