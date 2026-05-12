@@ -52,6 +52,7 @@ shift $((OPTIND - 1))
 
 if [ ! -f /usr/bin/gawk ]; then
   echo "/usr/bin/gawk not found, exiting."
+  exit 1
 fi
 
 if [ "$date" ]; then
