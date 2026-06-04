@@ -100,8 +100,16 @@ else
   watchcommand="tail -f /var/lib/dcache/billing/${year}/${month}/billing-${today}"
 fi
 
+# Colors
+NoColor='\033[0m'
+Blue='\033[34m'
+LightBlue='\033[94m'
+Red='\033[31m'
+Yellow='\033[33m'
+
 function awk_magic {
-  /usr/bin/gawk -v headnodelogs="$headnodelogs" -v showfullpath="$showfullpath" -v pathprefix="@/$pathprefix+/" -v source="$source" '
+  /usr/bin/gawk -v headnodelogs="$headnodelogs" -v showfullpath="$showfullpath" -v pathprefix="@/$pathprefix+/" -v source="$source" \
+                -v NoColor="$NoColor" -v Blue="$Blue" -v LightBlue="$LightBlue" -v Red="$Red" -v Yellow="$Yellow" '
     {
       # https://www.gnu.org/software/gawk/manual/html_node/Splitting-By-Content.html
       FPAT = "(\\[[^\\[]+\\])|({[^{]+})|([^ ]+)"
@@ -125,10 +133,10 @@ function awk_magic {
       if ( ten[1] != 0 )
       {
         if (source == "yes") {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, "\033[31mERRO\033[0m", matchres[0], "", "\033[31m"ten[2]"\033[0m "$6
+          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, Red"ERRO"NoColor, matchres[0], "", Red""ten[2]" "NoColor $6
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, "\033[31mERRO\033[0m", "", "\033[31m"ten[2]"\033[0m "$6
+          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Red"ERRO"NoColor, "", Red""ten[2]" "NoColor $6
         }
       }
       else if ( headnodelogs == "yes" )
@@ -157,10 +165,10 @@ function awk_magic {
         split($5,five,",")
 
         if (source == "yes") {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, "\033[33mREMO\033[0m", "", "     "(five[2]/1000000"MB"), $6
+          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "", "     "(five[2]/1000000"MB"), $6
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, "\033[33mREMO\033[0m", (five[2]/1000000"MB"), $6
+          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "     "(five[2]/1000000"MB"), $6
         }
       }
       else if ( $3 ~ /pool:/ )
@@ -170,10 +178,10 @@ function awk_magic {
         gsub(/pool:/, "", $3)
         gsub(/:remove/, "", $3)
         if (source == "yes") {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, "\033[33mREMO\033[0m", "", "     "(four[2]/1000000"MB"), four[1]
+          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, " ", "     "(four[2]/1000000"MB"), four[1]
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, "\033[33mREMO\033[0m", (four[2]/1000000"MB"), four[1]
+          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "     " (four[2]/1000000"MB"), four[1] 
         }
       }
       else
@@ -181,7 +189,7 @@ function awk_magic {
         # Maybe nothing gets this far
         gsub(/\[|\]/, "", $5)
         split($5,five,",")
-        printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, "\033[33mREMO\033[0m", (five[2]/1000000"MB"), five[1]
+        printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, (five[2]/1000000"MB"), five[1]
       }
     }
 
@@ -193,8 +201,8 @@ function awk_magic {
       gsub(/pool:/, "", $3)
       gsub(/:transfer/, "", $3)
       split($4,four,",")
-      gsub("true","\033[94mWRIT\033[0m",$9)
-      gsub("false","\033[34mREAD\033[0m",$9)
+      gsub("true",LightBlue"WRIT"NoColor,$9)
+      gsub("false",Blue"READ"NoColor,$9)
 
       if ( $10 ~ /^Xrootd-5.0:/ ) { 
         proto="XR50"
@@ -225,7 +233,7 @@ function awk_magic {
 
       if (source == "yes") {
         if ( twelve[1] != 0 ) {
-          printf "%8s %-22s %4s %-39s %-22s %-1s %4s %-1s\n", $2, $3, $9, matchres[0], proto" "(four[2]/1000000"MB")" "($8/1000)"s", "\033[31mERRO\033[0m", "\033[31m"twelve[2]"\033[0m", $5
+          printf "%8s %-22s %4s %-39s %-22s %-1s %4s %-1s\n", $2, $3, $9, matchres[0], proto" "(four[2]/1000000"MB")" "($8/1000)"s", Red"ERRO"NoColor, Red""twelve[2]""NoColor, $5
         }
         else if ( $5 == "Unknown" ) {
           printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, $9, matchres[0], proto" "(four[2]/1000000"MB")" "($8/1000)"s", four[1]
@@ -236,7 +244,7 @@ function awk_magic {
       }
       else {
         if ( twelve[1] != 0 ) {
-          printf "%8s %-22s %4s %-22s %-1s %4s %-1s\n", $2, $3, $9, proto" "(four[2]/1000000"MB")" "($8/1000)"s", "\033[31mERRO\033[0m", "\033[31m"twelve[2]"\033[0m", $5
+          printf "%8s %-22s %4s %-22s %-1s %4s %-1s\n", $2, $3, $9, proto" "(four[2]/1000000"MB")" "($8/1000)"s", Red"ERRO"NoColor, Red""twelve[2]""NoColor, $5
         }
         else if ( $5 == "Unknown" ) {
           printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, $9, proto" "(four[2]/1000000"MB")" "($8/1000)"s", four[1]
