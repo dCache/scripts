@@ -49,3 +49,8 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 0 12 28 * * root  DIR="/pnfs/grid.sara.nl/data/atlas/atlasdatadisk"    && DUMPFILE="$DIR/dumps/dump_$(date -d 'yesterday' '+\%Y\%m\%d')" && chimera_find.sh -U postgres "$DUMPFILE" "$DIR" / && chown atlas:atlas "$DUMPFILE" && chmod 640 "$DUMPFILE"
 0 13 28 * * root  DIR="/pnfs/grid.sara.nl/data/atlas/atlasscratchdisk" && DUMPFILE="$DIR/dumps/dump_$(date -d 'yesterday' '+\%Y\%m\%d')" && chimera_find.sh -U postgres "$DUMPFILE" "$DIR" / && chown atlas:atlas "$DUMPFILE" && chmod 640 "$DUMPFILE"
 ```
+
+dcache-watch.sh
+===============
+
+dcache-watch.sh translates dCache file transfer logs aka billing logs to human readable format in real time. You can also select a time range from history. It works with dCache logging format defaults. For help page run `dcache-watch.sh -h`
