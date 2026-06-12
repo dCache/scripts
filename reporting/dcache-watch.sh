@@ -145,10 +145,10 @@ function awk_magic {
         split($5,five,",")
         gsub(/\]/, "", five[2])
         if ( source == "yes" ) {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, "DONE", "", (five[2]/1000000)"MB in "($8/1000)"s", $6
+          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, "DONE", matchres[0], "      "(five[2]/1000000)"MB "($8/1000)"s", $6
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, "DONE", (five[2]/1000000)"MB in "($8/1000)"s", $6
+          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, "DONE", "      "(five[2]/1000000)"MB "($8/1000)"s", $6
         }
       }
     }
@@ -165,10 +165,10 @@ function awk_magic {
         split($5,five,",")
 
         if (source == "yes") {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "", "     "(five[2]/1000000"MB"), $6
+          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "", "      "(five[2]/1000000"MB"), $6
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "     "(five[2]/1000000"MB"), $6
+          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "      "(five[2]/1000000"MB"), $6
         }
       }
       else if ( $3 ~ /pool:/ )
@@ -178,10 +178,10 @@ function awk_magic {
         gsub(/pool:/, "", $3)
         gsub(/:remove/, "", $3)
         if (source == "yes") {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, " ", "     "(four[2]/1000000"MB"), four[1]
+          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, " ", "      "(four[2]/1000000"MB"), four[1]
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "     " (four[2]/1000000"MB"), four[1] 
+          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "      " (four[2]/1000000"MB"), four[1] 
         }
       }
       else
@@ -204,12 +204,18 @@ function awk_magic {
       gsub("true",LightBlue"WRIT"NoColor,$9)
       gsub("false",Blue"READ"NoColor,$9)
 
-      if ( $10 ~ /^Xrootd-5.0:/ ) { 
-        proto="XR50"
+      if ( $10 ~ /^Xrootd-5.0:/ && $10 ~ /:1094$/) { 
+        proto="XRTPC"
         gsub(/^Xrootd-5.0:/, "", $10)
-        match ($10, /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|^[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}/, matchres)      }
+        match ($10, /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|^[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}/, matchres)
+      }
+      else if ( $10 ~ /^Xrootd-5.0:/ ) { 
+        proto="XR50 "
+        gsub(/^Xrootd-5.0:/, "", $10)
+        match ($10, /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|^[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}/, matchres)
+      }
       else if ( $10 ~ /^Http-1.1:/ ) {
-        proto="HTTP"
+        proto="HTTP "
         gsub(/^Http-1.1:/, "", $10)
         match ($10, /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|^[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}/, matchres)
       }
