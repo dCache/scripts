@@ -3,7 +3,7 @@
 set -e
 
 usage() {
-    echo "Usage: $0 [-h HOSTNAME] [-p PORT] [-d DBNAME] [-U USERNAME] [-D DATE] [-l LIMIT] [-s] [-o] FILENAME [ROOT [PREFIX]]"
+    echo "Usage: $0 [-h HOSTNAME] [-p PORT] [-d DBNAME] [-U USERNAME] [-D DATE] [-l LIMIT] [-s] [-c] [-x] [-a] [-o] FILENAME [ROOT [PREFIX]]"
     echo
     echo "Options:"
     echo "  -h Specifies the host name of the machine on which postgresql is running. Defaults"
@@ -18,6 +18,7 @@ usage() {
     echo "  -s Include the size of each file in the dump."
     echo "  -c Include the creation date of each file in the dump."
     echo "  -x Include locality (O for online, N for nearline, can contain both)"
+    echo "  -a Include Adler32 checksum"
     echo "  -o Order the dump by pathnames."
     echo
     echo "FILENAME is the output file name. Use “-” to output to STDOUT. ROOT is the root of the"
@@ -29,9 +30,8 @@ usage() {
 }
 
 EXTRA_COLS=""
-JOIN_LOCATIONINFO=""
 
-while getopts h:p:d:U:D:l:scxo f; do
+while getopts h:p:d:U:D:l:scxoa f; do
   case "$f" in
   h) HOST="$OPTARG";;
   p) PORT="$OPTARG";;
@@ -55,6 +55,16 @@ while getopts h:p:d:U:D:l:scxo f; do
              FROM t_locationinfo
              WHERE inumber = p.inumber
          ) l ON true
+     "
+     ;;
+  a) EXTRA_COLS="${EXTRA_COLS}, c.isum"
+     JOIN_CHECKSUMS="
+         LEFT JOIN LATERAL (
+             SELECT isum
+             FROM t_inodes_checksum
+             WHERE inumber = p.inumber
+             AND itype = 1
+         ) c ON true
      "
      ;;
   o) ORDER="path";;
@@ -101,5 +111,6 @@ psql ${HOST:+-h $HOST} ${PORT:+-p $PORT} ${OUTPUT:+-o "$OUTPUT"} -t -A -f - $DAT
     )
     SELECT p.path${EXTRA_COLS} FROM paths p JOIN t_inodes i ON p.inumber = i.inumber
     ${JOIN_LOCATIONINFO}
+    ${JOIN_CHECKSUMS}
     WHERE i.itype = 32768 ${DATE:+AND i.icrtime <= '$DATE'} ${ORDER:+ORDER BY $ORDER} ${LIMIT:+LIMIT ${LIMIT}};
 EOF
