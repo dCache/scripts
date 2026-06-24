@@ -14,7 +14,7 @@ I (Onno) created this fork because I don't have commit permissions in the CERN r
 The command's help text:
 
 ```
-Usage: /usr/local/sbin/chimera_find.sh [-h HOSTNAME] [-p PORT] [-d DBNAME] [-U USERNAME] [-D DATE] [-l LIMIT] [-s] [-o] FILENAME [ROOT [PREFIX]]
+Usage: /usr/local/sbin/chimera_find.sh [-h HOSTNAME] [-p PORT] [-d DBNAME] [-U USERNAME] [-D DATE] [-l LIMIT] [-s] [-c] [-x] [-a] [-o] FILENAME [ROOT [PREFIX]]
 
 Options:
   -h Specifies the host name of the machine on which postgresql is running. Defaults
@@ -29,6 +29,7 @@ Options:
   -s Include the size of each file in the dump.
   -c Include the creation date of each file in the dump.
   -x Include locality (O for online, N for nearline, can contain both)
+  -a Include Adler32 checksum
   -o Order the dump by pathnames.
 
 FILENAME is the output file name. Use “-” to output to STDOUT. ROOT is the root of the
