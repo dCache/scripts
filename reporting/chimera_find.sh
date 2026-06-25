@@ -20,6 +20,7 @@ usage() {
     echo "  -x Include locality (O for online, N for nearline, can contain both)"
     echo "  -a Include Adler32 checksum"
     echo "  -o Order the dump by pathnames."
+    echo "  -F Field separator (default is '|'; use $'\t' for tab)"
     echo
     echo "FILENAME is the output file name. Use “-” to output to STDOUT. ROOT is the root of the"
     echo "directory tree to dump. ROOT defaults to /. PREFIX is a path PREFIX to place in front"
@@ -31,7 +32,7 @@ usage() {
 
 EXTRA_COLS=""
 
-while getopts h:p:d:U:D:l:scxoa f; do
+while getopts h:p:d:U:D:l:F:scxoa f; do
   case "$f" in
   h) HOST="$OPTARG";;
   p) PORT="$OPTARG";;
@@ -39,6 +40,8 @@ while getopts h:p:d:U:D:l:scxoa f; do
   U) USERNAME="$OPTARG";;
   D) DATE="$OPTARG";;
   l) LIMIT="$OPTARG";;
+  # We handle the optional separator with an array to enable $'\t' (tab) as separator
+  F) SEPARATOR=(--field-separator "$OPTARG");;
   s) EXTRA_COLS="${EXTRA_COLS}, i.isize";;
   c) EXTRA_COLS="${EXTRA_COLS}, i.icrtime";;
   x) EXTRA_COLS="${EXTRA_COLS}, l.locality"
@@ -100,7 +103,11 @@ else
 fi
 
 
-psql ${HOST:+-h $HOST} ${PORT:+-p $PORT} ${OUTPUT:+-o "$OUTPUT"} -t -A -f - $DATABASE $USERNAME <<-EOF
+psql ${HOST:+-h $HOST} ${PORT:+-p $PORT} \
+     ${OUTPUT:+-o "$OUTPUT"} \
+     "${SEPARATOR[@]}" \
+     -t -A -f - \
+     "$DATABASE" "$USERNAME" <<-EOF
     \set ON_ERROR_STOP
     WITH RECURSIVE paths(inumber, path) AS (
          VALUES $START
