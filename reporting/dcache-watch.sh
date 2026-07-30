@@ -229,6 +229,11 @@ function awk_magic {
         gsub(/^RemoteHttpsDataTransfer-1.1:https:\/\//, "", $10)
         match ($10, /[^:]*/, matchres)
       }
+      else if ( $10 ~ /^NFS4-4.1:/ ) {
+        proto="NFS41"
+        gsub(/^NFS4-4.1:/, "", $10)
+        match ($10, /^::1|^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|^[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}/, matchres)
+      }
       else {
         proto="NoMatch"
         $10="NoProtocolMatchNoSource"
