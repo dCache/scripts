@@ -133,10 +133,10 @@ function awk_magic {
       if ( ten[1] != 0 )
       {
         if (source == "yes") {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, Red"ERRO"NoColor, matchres[0], "", Red""ten[2]" "NoColor $6
+          printf "%8s %-22s %4s %-39s %-22s %-36s\n", $2, $3, Red"ERRO"NoColor, matchres[0], "", Red""ten[2]" "NoColor $6
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Red"ERRO"NoColor, "", Red""ten[2]" "NoColor $6
+          printf "%8s %-22s %4s %-22s %-36s\n", $2, $3, Red"ERRO"NoColor, "", Red""ten[2]" "NoColor $6
         }
       }
       else if ( headnodelogs == "yes" )
@@ -145,10 +145,10 @@ function awk_magic {
         split($5,five,",")
         gsub(/\]/, "", five[2])
         if ( source == "yes" ) {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, "DONE", matchres[0], "      "(five[2]/1000000)"MB "($8/1000)"s", $6
+          printf "%8s %-22s %4s %-39s %-22s %-36s\n", $2, $3, "DONE", matchres[0], "      "(five[2]/1000000)"MB "($8/1000)"s", $6
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, "DONE", "      "(five[2]/1000000)"MB "($8/1000)"s", $6
+          printf "%8s %-22s %4s %-22s %-36s\n", $2, $3, "DONE", "      "(five[2]/1000000)"MB "($8/1000)"s", $6
         }
       }
     }
@@ -165,10 +165,10 @@ function awk_magic {
         split($5,five,",")
 
         if (source == "yes") {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "", "      "(five[2]/1000000"MB"), $6
+          printf "%8s %-22s %4s %-39s %-22s %-36s\n", $2, $3, Yellow"REMO"NoColor, "", "      "(five[2]/1000000"MB"), $6
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "      "(five[2]/1000000"MB"), $6
+          printf "%8s %-22s %4s %-22s %-36s\n", $2, $3, Yellow"REMO"NoColor, "      "(five[2]/1000000"MB"), $6
         }
       }
       else if ( $3 ~ /pool:/ )
@@ -178,10 +178,10 @@ function awk_magic {
         gsub(/pool:/, "", $3)
         gsub(/:remove/, "", $3)
         if (source == "yes") {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, " ", "      "(four[2]/1000000"MB"), four[1]
+          printf "%8s %-22s %4s %-39s %-22s %-36s\n", $2, $3, Yellow"REMO"NoColor, " ", "      "(four[2]/1000000"MB"), four[1]
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, "      " (four[2]/1000000"MB"), four[1] 
+          printf "%8s %-22s %4s %-22s %-36s\n", $2, $3, Yellow"REMO"NoColor, "      " (four[2]/1000000"MB"), four[1] 
         }
       }
       else
@@ -189,7 +189,7 @@ function awk_magic {
         # Maybe nothing gets this far
         gsub(/\[|\]/, "", $5)
         split($5,five,",")
-        printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, Yellow"REMO"NoColor, (five[2]/1000000"MB"), five[1]
+        printf "%8s %-22s %4s %-22s %-36s\n", $2, $3, Yellow"REMO"NoColor, (five[2]/1000000"MB"), five[1]
       }
     }
 
@@ -247,10 +247,10 @@ function awk_magic {
           printf "%8s %-22s %4s %-39s %-22s %-1s %4s %-1s\n", $2, $3, $9, matchres[0], proto" "(four[2]/1000000"MB")" "($8/1000)"s", Red"ERRO"NoColor, Red""twelve[2]""NoColor, $5
         }
         else if ( $5 == "Unknown" ) {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, $9, matchres[0], proto" "(four[2]/1000000"MB")" "($8/1000)"s", four[1]
+          printf "%8s %-22s %4s %-39s %-22s %-36s\n", $2, $3, $9, matchres[0], proto" "(four[2]/1000000"MB")" "($8/1000)"s", four[1]
         }
         else {
-          printf "%8s %-22s %4s %-39s %-22s %-100s\n", $2, $3, $9, matchres[0], proto" "(four[2]/1000000"MB")" "($8/1000)"s", $5
+          printf "%8s %-22s %4s %-39s %-22s %-36s\n", $2, $3, $9, matchres[0], proto" "(four[2]/1000000"MB")" "($8/1000)"s", $5
         }
       }
       else {
@@ -258,10 +258,10 @@ function awk_magic {
           printf "%8s %-22s %4s %-22s %-1s %4s %-1s\n", $2, $3, $9, proto" "(four[2]/1000000"MB")" "($8/1000)"s", Red"ERRO"NoColor, Red""twelve[2]""NoColor, $5
         }
         else if ( $5 == "Unknown" ) {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, $9, proto" "(four[2]/1000000"MB")" "($8/1000)"s", four[1]
+          printf "%8s %-22s %4s %-22s %-36s\n", $2, $3, $9, proto" "(four[2]/1000000"MB")" "($8/1000)"s", four[1]
         }
         else {
-          printf "%8s %-22s %4s %-22s %-100s\n", $2, $3, $9, proto" "(four[2]/1000000"MB")" "($8/1000)"s", $5
+          printf "%8s %-22s %4s %-22s %-36s\n", $2, $3, $9, proto" "(four[2]/1000000"MB")" "($8/1000)"s", $5
         }
       }
     }
